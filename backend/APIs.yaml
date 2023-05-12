@@ -1,0 +1,512 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: My Flask API
+paths:
+  /:
+    get:
+      summary: Homepage
+      operationId: get_homepage
+      responses:
+        200:
+          description: Homepage message
+          content:
+            text/html:
+              schema:
+                type: string
+  /signup:
+    post:
+      summary: Signup a new user
+      operationId: signup_user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                username:
+                  type: string
+                  example: johndoe
+                password:
+                  type: string
+                  example: mypassword
+                email:
+                  type: string
+                  example: john.doe@example.com
+              required:
+                - name
+                - username
+                - password
+                - email
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User created successfully
+        '409':
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Username already exists
+
+    x-swagger-router-controller: app.controllers.usersController
+    x-swagger-router-model: app.models.User
+  /login:
+    post:
+      summary: Login user
+      operationId: login_user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: johndoe
+                password:
+                  type: string
+                  example: mypassword
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwibmFtZSI6IkpvaG4gRG9lIiwidXNlcm5hbWUiOiJqb2huZG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        '401':
+          description: Invalid username or password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid username or password
+      x-swagger-router-controller: app.controllers.authController
+  /createposts:
+    post:
+      summary: Creates a new post
+      tags:
+        - posts
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                user_id:
+                  type: integer
+                image:
+                  type: string
+                  format: binary
+              required:
+                - title
+                - description
+                - user_id
+                - image
+      responses:
+        '200':
+          description: Post created successfully
+        '400':
+          description: Invalid input data
+  /users:
+    get:
+      summary: Get user details
+      tags:
+        - users
+      parameters:
+        - in: query
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details found successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  username:
+                    type: string
+                  name:
+                    type: string
+        '404':
+          description: User not found
+  /posts:
+    get:
+      summary: Get all posts
+      tags:
+        - posts
+      parameters:
+        - in: query
+          name: userId
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Posts fetched successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    image_url:
+                      type: string
+        '400':
+          description: Invalid input data
+  /posts/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        description: The ID of the post to update
+        schema:
+          type: integer
+    get:
+      summary: Get a specific post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  image_url:
+                    type: string
+    put:
+      summary: Update a specific post
+      tags:
+        - posts
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  image_url:
+                    type: string
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete a post
+      description: Deletes a post with the specified ID.
+      tags:
+        - posts
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: The ID of the post to be deleted.
+      responses:
+        204:
+          description: Post deleted successfully
+          
+  /api/users/search:
+    get:
+      summary: Search for users by name
+      description: Returns a list of users whose names contain the search query.
+      tags:
+        - users
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: The search query.
+      responses:
+        200:
+          description: A list of users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    username:
+                      type: string
+              
+  /api/users/{user_id}/follow:
+    post:
+      summary: Follow a user
+      description: Follows the specified user.
+      tags:
+        - users
+      parameters:
+        - in: path
+          name: user_id
+          schema:
+            type: integer
+          required: true
+          description: The ID of the user who is following.
+      responses:
+        200:
+          description: You are now following the specified user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /api/users/{user_id}/unfollow:
+    post:
+      summary: Unfollow a user
+      tags:
+        - users
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          description: ID of the user who wants to unfollow someone
+          schema:
+            type: integer
+        - in: header
+          name: followed_id
+          required: true
+          description: ID of the user to be unfollowed
+          schema:
+            type: object
+            properties:
+              followed_id:
+                type: integer
+          example:
+            followed_id: 2
+      responses:
+        '200':
+          description: User unfollowed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A message indicating that the user has unfollowed another user
+
+  /api/users/{user_id}/following:
+    get:
+      summary: Get users followed by a user
+      tags:
+        - users
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          description: ID of the user whose followed users are to be retrieved
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of users followed by the specified user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  following:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        username:
+                          type: string
+                        email:
+                          type: string
+  /api/users/{user_id}:
+    get:
+      summary: Get user information
+      tags:
+      - users
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          description: ID of the user to retrieve information for
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: The user's ID
+                  name:
+                    type: string
+                    description: The user's name
+                  username:
+                    type: string
+                    description: The user's username
+                  num_blogs:
+                    type: integer
+                    description: The number of blog posts made by the user
+                  num_followers:
+                    type: integer
+                    description: The number of followers the user has
+                  num_following:
+                    type: integer
+                    description: The number of users the user is following
+                  blog_posts:
+                    type: array
+                    description: The list of blog posts made by the user
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: The post's ID
+                        title:
+                          type: string
+                          description: The post's title
+                        description:
+                          type: string
+                          description: The post's description
+                        image_url:
+                          type: string
+                          description: The URL of the post's image
+    put:
+      description: Updates user info for a given user ID
+      tags:
+      - users
+      parameters:
+        - name: user_id
+          in: path
+          description: The ID of the user to update info for
+          required: true
+          schema:
+            type: integer
+        - name: body
+          in: header
+          description: The request body containing the new user info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+          required: true
+      responses:
+        200:
+          description: Returns a message indicating the user was updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        404:
+          description: Returns an error message if the user is not found
+
+      
+  /following_posts:
+    get:
+      description: Returns all posts from the users followed by a given user
+      tags:
+      - posts
+      parameters:
+        - name: username
+          in: query
+          description: The username of the user whose followed users' posts should be returned
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns a list of post objects with their associated username
+        404:
+          description: Returns an error message if the user is not found or has no following users
+          
+  
+   
